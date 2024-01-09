@@ -11,7 +11,7 @@ export function HomeHeader() {
     <HStack bg="gray.600" pt={16} pb={5} px={8} alignItems="center">
       <UserPhoto
         source={{ uri: 'https://github.com/AlessandroLobo.png' }}
-        alt="Imagen do usuário"
+        alt="Imagem do usuário"
         size={16}
         mr={4}
       />
@@ -19,7 +19,11 @@ export function HomeHeader() {
         <Text color="gray.100" fontSize="md">
           Olá,
         </Text>
-        <Heading color="gray.100" fontSize="md">
+        <Heading
+          color="gray.100"
+          fontSize="md"
+          fontFamily="heading"
+        >
           Alessandro
         </Heading>
       </VStack>

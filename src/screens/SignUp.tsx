@@ -1,13 +1,17 @@
 import { useNavigation } from "@react-navigation/native";
-import { VStack, Image, Text, Center, Heading, ScrollView } from "native-base";
+import { VStack, Image, Text, Center, Heading, ScrollView, useToast } from "native-base";
 
 import LogoSvg from "@assets/logo.svg";
 import BackgroundImg from "@assets/background.png";
 
 import { Input } from "@components/Input";
 import { Button } from "@components/Button";
-import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { api } from "@services/api";
+import { Alert } from "react-native";
+import { AppError } from "@utils/AppError";
 
 type formDataProps = {
   name: string;
@@ -17,18 +21,47 @@ type formDataProps = {
 
 }
 
+const signUpSchema = yup.object({
+  name: yup.string().required('O nome é obrigatório'),
+  email: yup.string().required('O e-mail é obrigatório').email('E-mail inválido'),
+  password: yup.string().required('A senha é obrigatória').min(6, 'A senha precisa ter no mínimo 6 caracteres'),
+  password_confirm: yup.string().required().oneOf([
+    yup.ref('password'),
+  ], 'As senhas precisam ser iguais')
+})
+
 export function SignUp() {
+
+  const toast = useToast();
 
   const navigation = useNavigation();
 
-  const { control, handleSubmit } = useForm<formDataProps>();
+  const { control, handleSubmit, formState: { errors } } = useForm<formDataProps>({
+    resolver: yupResolver(signUpSchema)
+  });
 
   function handleNewGoBack() {
     navigation.goBack();
   }
 
-  function handleSignUp(data: formDataProps) {
-    console.log('\x1b[31m', data);
+  async function handleSignUp({ name, email, password }: formDataProps) {
+    try {
+      const response = await api.post('/users', {
+        name,
+        email,
+        password
+      })
+      console.log(response.data)
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const title = isAppError ? error.message : 'Não foi possível criar conta. Tente novamente mais tarde';
+
+      toast.show({
+        title,
+        placement: 'top',
+        bgColor: 'red.500',
+      })
+    }
   }
 
   return (
@@ -63,9 +96,12 @@ export function SignUp() {
               <Input placeholder="Nome"
                 onChangeText={onChange}
                 value={value}
+                errorMessage={errors.name?.message}
               />
             )}
           />
+
+
           <Controller
             control={control}
             name="email"
@@ -75,6 +111,7 @@ export function SignUp() {
                 autoCapitalize="none"
                 onChangeText={onChange}
                 value={value}
+                errorMessage={errors.email?.message}
               />
             )}
           />
@@ -86,6 +123,7 @@ export function SignUp() {
                 secureTextEntry
                 onChangeText={onChange}
                 value={value}
+                errorMessage={errors.password?.message}
               />
             )}
           />
@@ -97,6 +135,7 @@ export function SignUp() {
                 secureTextEntry
                 onChangeText={onChange}
                 value={value}
+                errorMessage={errors.password_confirm?.message}
                 onSubmitEditing={handleSubmit(handleSignUp)}
                 returnKeyType="send"
               />
