@@ -12,6 +12,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { api } from "@services/api";
 import { Alert } from "react-native";
 import { AppError } from "@utils/AppError";
+import { useState } from "react";
+import { useAuth } from "@hooks/useAuth";
 
 type formDataProps = {
   name: string;
@@ -31,6 +33,9 @@ const signUpSchema = yup.object({
 })
 
 export function SignUp() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { signIn } = useAuth();
 
   const toast = useToast();
 
@@ -46,13 +51,14 @@ export function SignUp() {
 
   async function handleSignUp({ name, email, password }: formDataProps) {
     try {
-      const response = await api.post('/users', {
-        name,
-        email,
-        password
-      })
-      console.log(response.data)
+      setIsLoading(true)
+
+      await api.post('/users', { name, email, password })
+      await signIn(email, password)
+
+
     } catch (error) {
+      setIsLoading(false)
       const isAppError = error instanceof AppError;
       const title = isAppError ? error.message : 'Não foi possível criar conta. Tente novamente mais tarde';
 
@@ -142,8 +148,9 @@ export function SignUp() {
             )}
           />
           <Button
-            onPress={handleSubmit(handleSignUp)}
             title="Criar e Acessar"
+            onPress={handleSubmit(handleSignUp)}
+            isLoading={isLoading}
           />
           <Button
             title="Voltar para o Login"

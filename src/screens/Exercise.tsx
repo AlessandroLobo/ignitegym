@@ -8,6 +8,7 @@ import BodySvg from '../assets/body.svg'
 import SeriesSvg from '../assets/series.svg'
 import RepetitionsSvg from '../assets/repetitions.svg'
 import { Button } from "@components/Button";
+import { useEffect } from "react";
 
 
 export function Exercise() {
@@ -19,7 +20,6 @@ export function Exercise() {
 
   return (
     <VStack flex={1}>
-
       <VStack px={8} bg="gray.600" pt={12}>
         <TouchableOpacity
           onPress={handleGoBack}
