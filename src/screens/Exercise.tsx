@@ -8,7 +8,6 @@ import BodySvg from '../assets/body.svg'
 import SeriesSvg from '../assets/series.svg'
 import RepetitionsSvg from '../assets/repetitions.svg'
 import { Button } from "@components/Button";
-import { useEffect } from "react";
 
 
 export function Exercise() {
