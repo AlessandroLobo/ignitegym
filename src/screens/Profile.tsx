@@ -8,14 +8,34 @@ import { Input } from "@components/Input";
 import { Button } from "@components/Button";
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+import { Controller, useForm } from 'react-hook-form'
+import { useAuth } from "@hooks/useAuth";
 
 const PHOTO_SIZE = 33;
+
+type FormDataProps = {
+  name: string;
+  email: string;
+  password: string;
+  old_Password: string;
+  confirm_password: string;
+}
+
 
 export function Profile() {
   const [photoIsLoading, setPhotoIsLoading] = useState(false)
   const [userPhoto, setUserPhoto] = useState('https://github.com/AlessandroLobo.png')
 
   const toast = useToast()
+
+  const { user } = useAuth()
+
+  const { control, handleSubmit } = useForm<FormDataProps>({
+    defaultValues: {
+      name: user.name,
+      email: user.email,
+    }
+  })
 
   // Carrega a foto da galeria
   async function handleUserPhotoSelect() {
@@ -40,7 +60,7 @@ export function Profile() {
           return toast.show({
 
             //usando toast --------------------------------------------------------------
-            title: 'Erro ao carrregar a imagem',
+            title: 'Erro ao carregar a imagem',
             description: 'Imagem muito grande Escolha uma imagem menor que 5mb',
             placement: 'top',
             bgColor: 'red.500',
@@ -58,6 +78,10 @@ export function Profile() {
     } finally {
       setPhotoIsLoading(false)
     }
+  }
+
+  async function handleProfileUpdate(data: FormDataProps) {
+    console.log(data)
   }
 
 
@@ -87,38 +111,82 @@ export function Profile() {
               Alterar foto
             </Text>
           </TouchableOpacity>
-          <Input
-            bg="gray.600"
-            placeholder="Nome"
+
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { value, onChange } }) => (
+              <Input
+                bg="gray.600"
+                placeholder="Nome"
+                onChangeText={onChange}
+                value={value}
+              />
+            )}
           />
-          <Input
-            bg="gray.600"
-            value="alessandro.lobo@hotmail.com"
-            isDisabled
+
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { value, onChange } }) => (
+              <Input
+                bg="gray.600"
+                placeholder="E-mail"
+                onChangeText={onChange}
+                value={value}
+              />
+            )}
           />
+
         </Center>
         <VStack px={10} mt={12} mb={9}>
           <Heading color="gray.200" fontSize="md" mb={2}>
             Alterar Senha
           </Heading>
-          <Input
-            bg="gray.600"
-            placeholder="Senha antiga"
-            secureTextEntry
+
+          <Controller
+            control={control}
+            name="old_Password"
+            render={({ field: { onChange } }) => (
+              <Input
+                bg="gray.600"
+                placeholder="Senha antiga"
+                secureTextEntry
+                onChangeText={onChange}
+              />
+            )}
           />
-          <Input
-            bg="gray.600"
-            placeholder="Nova senha"
-            secureTextEntry
+
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange } }) => (
+              <Input
+                bg="gray.600"
+                placeholder="Nova senha"
+                secureTextEntry
+                onChangeText={onChange}
+              />
+            )}
           />
-          <Input
-            bg="gray.600"
-            placeholder="confirmar a nova senha"
-            secureTextEntry
+
+
+          <Controller
+            control={control}
+            name="confirm_password"
+            render={({ field: { onChange } }) => (
+              <Input
+                bg="gray.600"
+                placeholder="confirmar a nova senha"
+                secureTextEntry
+                onChangeText={onChange}
+              />
+            )}
           />
           <Button
             title="Atualizar"
             mt={6}
+            onPress={handleSubmit(handleProfileUpdate)}
 
           />
         </VStack>
