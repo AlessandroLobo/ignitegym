@@ -3,7 +3,7 @@ import { Center, ScrollView, VStack, Skeleton, Text, Heading, useToast } from "n
 import { ScreenHeader } from "@components/ScreeeHeader";
 import { UserPhoto } from "@components/UserPhoto";
 import { useState } from "react";
-import { Alert, TouchableOpacity } from "react-native";
+import { TouchableOpacity } from "react-native";
 import { Input } from "@components/Input";
 import { Button } from "@components/Button";
 import * as ImagePicker from 'expo-image-picker';
@@ -12,6 +12,10 @@ import { Controller, useForm } from 'react-hook-form'
 import { useAuth } from "@hooks/useAuth";
 import * as yup from 'yup';
 import { yupResolver } from "@hookform/resolvers/yup";
+import { api } from "@services/api";
+import { AppError } from "@utils/AppError";
+import defaultUserImage from '@assets/userPhotoDefault.png'
+
 
 const PHOTO_SIZE = 33;
 
@@ -19,7 +23,7 @@ type FormDataProps = {
   name: string;
   email: string;
   password?: string;
-  old_Password?: string;
+  old_password?: string;
   confirm_password?: string;
 }
 
@@ -47,12 +51,12 @@ const profileSchema = yup.object({
 
 
 export function Profile() {
+  const [isUpdate, setUpdate] = useState(false)
   const [photoIsLoading, setPhotoIsLoading] = useState(false)
-  const [userPhoto, setUserPhoto] = useState('https://github.com/AlessandroLobo.png')
 
   const toast = useToast()
 
-  const { user } = useAuth()
+  const { user, updateUserProfile } = useAuth()
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormDataProps | any>({
     defaultValues: {
@@ -93,7 +97,33 @@ export function Profile() {
           //usando toast ----------------------------------------------------------------
 
         } else {
-          setUserPhoto(photoSelected.assets[0].uri)
+
+          const fileExtension = photoSelected.assets[0].uri.split('.').pop()
+          const photoFile = {
+            name: `${user.name}.${fileExtension}`.toLowerCase(),
+            uri: photoSelected.assets[0].uri,
+            type: `${photoSelected.assets[0].type}/${fileExtension}`,
+          } as any
+          const userPhotoUploadForm = new FormData()
+          userPhotoUploadForm.append('avatar', photoFile)
+
+          console.log(photoFile)
+
+          const avatarUpdateResponse = await api.patch('/users/avatar', userPhotoUploadForm, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+
+          const userUpdate = user;
+          userUpdate.avatar = avatarUpdateResponse.data.avatar;
+          updateUserProfile(userUpdate)
+
+          toast.show({
+            title: 'Foto atualizada com sucesso',
+            placement: 'top',
+            bgColor: 'green.500',
+          })
         }
 
       }
@@ -106,9 +136,34 @@ export function Profile() {
   }
 
   async function handleProfileUpdate(data: FormDataProps) {
-    console.log(data)
-  }
+    try {
+      setUpdate(true)
+      console.log(data)
+      const userUpdated = user;
+      userUpdated.name = data.name;
 
+      await api.put('/users', data)
+
+      await updateUserProfile(userUpdated)
+      toast.show({
+        title: 'Perfil atualizados com sucesso',
+        placement: 'top',
+        bgColor: 'green.500',
+      })
+
+    } catch (error) {
+      const isAppError = error instanceof AppError
+      const title = isAppError ? error.message : 'Não foì possível atualizar o perfil'
+      toast.show({
+        title,
+        placement: 'top',
+        bgColor: 'red.500',
+      })
+
+    } finally {
+      setUpdate(false)
+    }
+  }
 
   return (
     <VStack flex={1}>
@@ -125,7 +180,10 @@ export function Profile() {
             />
             :
             <UserPhoto
-              source={{ uri: userPhoto }}
+              source={
+                user.avatar
+                  ? { uri: `${api.defaults.baseURL}/avatar/${user.avatar}` }
+                  : defaultUserImage}
               alt="Foto do usuário"
               size={PHOTO_SIZE}
             />
@@ -172,7 +230,7 @@ export function Profile() {
 
           <Controller
             control={control}
-            name="old_Password"
+            name="old_password"
             render={({ field: { onChange } }) => (
               <Input
                 bg="gray.600"
@@ -215,7 +273,7 @@ export function Profile() {
             title="Atualizar"
             mt={6}
             onPress={handleSubmit(handleProfileUpdate)}
-
+            isLoading={isUpdate}
           />
         </VStack>
       </ScrollView>

@@ -36,7 +36,6 @@ export function SignIn() {
     try {
       setIsLoading(true);
       await signIn(email, password);
-
     } catch (error) {
       const isAppError = error instanceof AppError;
 
