@@ -43,7 +43,6 @@ export function Exercise() {
       setIsLoading(true)
       const response = await api.get(`/exercises/${exerciseId}`)
       setExercise(response.data)
-      console.log('response', response.data)
     } catch (error) {
       const isAppError = error instanceof AppError
       const title = isAppError ? error.message : 'Não foi possível carregar os detalhes dos exercícios';

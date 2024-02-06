@@ -107,7 +107,6 @@ export function Profile() {
           const userPhotoUploadForm = new FormData()
           userPhotoUploadForm.append('avatar', photoFile)
 
-          console.log(photoFile)
 
           const avatarUpdateResponse = await api.patch('/users/avatar', userPhotoUploadForm, {
             headers: {
