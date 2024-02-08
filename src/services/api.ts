@@ -74,8 +74,18 @@ api.registerInterceptTokenManager = ({ signOut, refreshTokenUpdate }) => {
             const { data } = await api.post('/sessions/refresh-token', { token: refresh_token })
             await storageAuthTokenSave(data.token)
 
-            api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`
+            if (originalRequest.data) {
+              originalRequest.data = JSON.parse(originalRequest.data);
+            }
+
             originalRequest.headers['Authorization'] = `Bearer ${data.token}`
+            api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`
+
+            failedQueue.forEach(request => {
+              request.resolve(data.token);
+            })
+
+            resolve(api(originalRequest))
 
             refreshTokenUpdate(data.token)
             processQueue({ error: null, token: data.token })
